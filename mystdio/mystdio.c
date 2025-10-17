@@ -88,3 +88,4 @@ void myfclose(MYFILE* fp)
         free(fp);
     }
 }
+// test
