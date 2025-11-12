@@ -83,6 +83,21 @@ public:
                 return false;
             if (id == 0)
             {
+                // 子进程要关闭自己的写端，还要关闭从父进程继承下来的所有写端
+                // 那么这些继承的写端wfd都在哪里？
+                // _channels是会被子进程继承下去的，
+                // 1.子进程不需要考虑父进程之后的操作会影响自己
+                // 2.fork之后，当前进程会看到历史父进程所创建的所有的wfd，至于后续父进程emplace_back，和当前子进程无关
+
+                // 因此，只要每次fork之后都把子进程继承父进程的wfd关闭，每个子进程在回收时，对应的文件描述符的引用计数就不会不为1
+                std::cout << "进程： " << getpid() << "关闭";
+                for (auto &c : _channels)
+                {
+                    c.Close(); // 关闭子进程继承下来的父进程的文件描述符
+                    std::cout << c.Fd() << " ";
+                }
+                std::cout << std::endl;
+
                 // 子 读端
                 // 3.关闭不需要的rw端，形成信道
                 close(pipefd[1]);
@@ -122,10 +137,15 @@ public:
 
     void WaitSubProcess()
     {
-        for (int end = _channels.size() - 1; end >= 0; end--)
+        // for (int end = _channels.size() - 1; end >= 0; end--)
+        // {
+        //     _channels[end].Close();
+        //     _channels[end].Wait();
+        // }
+        for (auto &c : _channels)
         {
-            _channels[end].Close();
-            _channels[end].Wait();
+            c.Close();
+            c.Wait();
         }
     }
 
