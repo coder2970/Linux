@@ -1,0 +1,10 @@
+hello
+hello
+hello
+hello
+hello
+hello
+[2025-12-22 15:37:16] [Error] [640273] [main.cc] [5] - hello world12343.14
+[2025-12-22 15:37:16] [Waring] [640273] [main.cc] [6] - hello world12343.14
+[2025-12-22 15:37:16] [Fatal] [640273] [main.cc] [7] - hello world12343.14
+[2025-12-22 15:37:16] [Info] [640273] [main.cc] [8] - hello world12343.14
