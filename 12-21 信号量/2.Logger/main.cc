@@ -1,6 +1,7 @@
 #include "Logger.hpp"
 int main()
 {
+    // RAII风格的日志构建与输出刷新的过程
     EnableFileLogStragegy();
     LOG(LogLevel::ERROR) << "hello world" << "1234" << 3.14;
     LOG(LogLevel::WARING) << "hello world" << "1234" << 3.14;
