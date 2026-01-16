@@ -14,8 +14,8 @@ static const int g_default_sockfd = -1;
 class UdpServer
 {
 public:
-    UdpServer(const std::string &ip, uint16_t port)
-        : _sockfd(g_default_sockfd), _ip(ip), _port(port), _isrunning(false)
+    UdpServer(/*const std::string &ip,*/ uint16_t port)
+        : _sockfd(g_default_sockfd), /*_ip(ip),*/ _port(port), _isrunning(false)
     {
     }
 
@@ -53,8 +53,9 @@ public:
         bzero(&local, sizeof(local)); // 把指定的内存块清零
 
         local.sin_family = AF_INET;
-        local.sin_port = htons(_port);                  // 主机序列转网络序列
-        local.sin_addr.s_addr = inet_addr(_ip.c_str()); // 1.字符串转整数ip 2.主机序列转网络序列
+        local.sin_port = htons(_port);             // 主机序列转网络序列
+        local.sin_addr.s_addr = htonl(INADDR_ANY); // 任意IP绑定
+        // local.sin_addr.s_addr = inet_addr(_ip.c_str()); // 1.字符串转整数ip 2.主机序列转网络序列
 
         // 2.2 和socket进行绑定
         int n = bind(_sockfd, (struct sockaddr *)&local, sizeof(local));
@@ -73,8 +74,27 @@ public:
         _isrunning = true;
         while (_isrunning)
         {
+            char buffer[1024];
+            buffer[0] = 0; // 清空缓冲区
+
+            struct sockaddr_in peer;      // 对端主机的套接字信息
+            socklen_t len = sizeof(peer); // 输入输出型参数, 初始化时要设为原来结构体大小,且每次都要重新设置
             // 1.读取数据
-                }
+            ssize_t n = recvfrom(_sockfd, buffer, sizeof(buffer), 0, (struct sockaddr *)&peer, &len);
+            if (n > 0)
+            {
+                // 找到Client信息
+                uint16_t client_port = ntohs(peer.sin_port); // 网络转主机
+                std::string client_ip = inet_ntoa(peer.sin_addr);
+                // 读成功
+                buffer[n] = 0;
+                LOG(LogLevel::DEBUG) << "[" << client_ip << ": " << client_port << "]: " << buffer;
+
+                std::string echo_string = "Server say: ";
+                echo_string += buffer;
+                sendto(_sockfd, echo_string.c_str(), echo_string.size(), 0, (struct sockaddr *)&peer, sizeof(peer));
+            }
+        }
         _isrunning = false;
     }
 
@@ -90,6 +110,6 @@ public:
 private:
     int _sockfd;
     uint16_t _port;
-    std::string _ip;
+    // std::string _ip;
     bool _isrunning;
 };
