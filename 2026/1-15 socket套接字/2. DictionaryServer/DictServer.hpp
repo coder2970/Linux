@@ -9,7 +9,6 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include "Logger.hpp"
-#include "Dictionary.hpp"
 
 // 定义回调函数
 using callback_t = std::function<std::string(const std::string &word, const std::string &who_ip, uint16_t who_port)>;
