@@ -68,6 +68,7 @@ public:
             ssize_t n = recvfrom(_sockfd, buffer, sizeof(buffer), 0, (struct sockaddr *)&peer, &len);
             if (n > 0)
             {
+                buffer[n] = 0;
                 // 找到Client信息
                 uint16_t client_port = ntohs(peer.sin_port); // 网络转主机
                 std::string client_ip = inet_ntoa(peer.sin_addr);
