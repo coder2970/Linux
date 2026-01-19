@@ -61,6 +61,11 @@ public:
     {
         return _ip + "-" + std::to_string(_port);
     }
+
+    bool operator==(const InetAddr &addr)
+    {
+        return (_ip == addr._ip && _port == addr._port);
+    }
     ~InetAddr()
     {
     }
