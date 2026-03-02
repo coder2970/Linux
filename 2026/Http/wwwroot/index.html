@@ -1,0 +1,208 @@
+<!--  默认首页 -->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>C++ Server Game</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #1a1a1a;
+            color: #fff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        h1 { margin-bottom: 10px; text-shadow: 0 0 10px #00ffcc; }
+        
+        #game-container {
+            position: relative;
+            box-shadow: 0 0 20px rgba(0, 255, 204, 0.2);
+            border: 2px solid #333;
+        }
+
+        canvas {
+            background-color: #000;
+            display: block;
+        }
+
+        #ui-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.7);
+            transition: opacity 0.3s;
+        }
+
+        .hidden { opacity: 0; pointer-events: none; }
+
+        button {
+            padding: 15px 40px;
+            font-size: 20px;
+            background: linear-gradient(45deg, #00ffcc, #0099ff);
+            border: none;
+            color: #000;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: transform 0.1s;
+        }
+
+        button:hover { transform: scale(1.05); }
+        button:active { transform: scale(0.95); }
+
+        #score-board {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            font-size: 18px;
+            color: #00ffcc;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>🚀 Space Dodge</h1>
+    
+    <div id="game-container">
+        <div id="score-board">分数: 0</div>
+        <canvas id="gameCanvas" width="400" height="600"></canvas>
+        
+        <!-- UI 覆盖层 -->
+        <div id="ui-layer">
+            <h2 id="status-text" style="font-size: 32px; margin-bottom: 20px;">准备好了吗？</h2>
+            <button onclick="startGame()">开始游戏</button>
+            <p style="margin-top: 15px; font-size: 14px; color: #aaa;">使用 ← → 方向键移动</p>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const uiLayer = document.getElementById('ui-layer');
+        const statusText = document.getElementById('status-text');
+        const scoreElement = document.getElementById('score-board');
+
+        // 游戏状态
+        let isRunning = false;
+        let score = 0;
+        let player = { x: 175, y: 550, width: 50, height: 20, color: '#00ffcc', speed: 5 };
+        let enemies = [];
+        let animationId;
+        
+        // 按键控制
+        let keys = { ArrowLeft: false, ArrowRight: false };
+
+        document.addEventListener('keydown', (e) => { if(keys.hasOwnProperty(e.code)) keys[e.code] = true; });
+        document.addEventListener('keyup', (e) => { if(keys.hasOwnProperty(e.code)) keys[e.code] = false; });
+
+        function spawnEnemy() {
+            if (!isRunning) return;
+            const size = Math.random() * 30 + 20;
+            enemies.push({
+                x: Math.random() * (canvas.width - size),
+                y: -size,
+                width: size,
+                height: size,
+                speed: Math.random() * 2 + 2 + (score * 0.005), // 随分数增加难度
+                color: `hsl(${Math.random() * 360}, 70%, 50%)`
+            });
+            
+            // 随机生成下一个敌人的时间
+            setTimeout(spawnEnemy, 1000 - Math.min(score, 800));
+        }
+
+        function update() {
+            if (!isRunning) return;
+
+            // 移动玩家
+            if (keys.ArrowLeft && player.x > 0) player.x -= player.speed;
+            if (keys.ArrowRight && player.x < canvas.width - player.width) player.x += player.speed;
+
+            // 更新敌人
+            for (let i = 0; i < enemies.length; i++) {
+                let e = enemies[i];
+                e.y += e.speed;
+
+                // 碰撞检测
+                if (
+                    player.x < e.x + e.width &&
+                    player.x + player.width > e.x &&
+                    player.y < e.y + e.height &&
+                    player.height + player.y > e.y
+                ) {
+                    gameOver();
+                    return;
+                }
+
+                // 超出屏幕移除并加分
+                if (e.y > canvas.height) {
+                    enemies.splice(i, 1);
+                    i--;
+                    score += 10;
+                    scoreElement.innerText = "分数: " + score;
+                }
+            }
+
+            draw();
+            animationId = requestAnimationFrame(update);
+        }
+
+        function draw() {
+            // 清空画布
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // 绘制玩家
+            ctx.fillStyle = player.color;
+            ctx.shadowBlur = 15;
+            ctx.shadowColor = player.color;
+            ctx.fillRect(player.x, player.y, player.width, player.height);
+            ctx.shadowBlur = 0;
+
+            // 绘制敌人
+            enemies.forEach(e => {
+                ctx.fillStyle = e.color;
+                ctx.fillRect(e.x, e.y, e.width, e.height);
+            });
+        }
+
+        function startGame() {
+            isRunning = true;
+            score = 0;
+            enemies = [];
+            player.x = 175;
+            scoreElement.innerText = "分数: 0";
+            uiLayer.classList.add('hidden');
+            
+            spawnEnemy();
+            update();
+        }
+
+        function gameOver() {
+            isRunning = false;
+            cancelAnimationFrame(animationId);
+            statusText.innerText = "游戏结束! 得分: " + score;
+            document.querySelector('button').innerText = "再玩一次";
+            uiLayer.classList.remove('hidden');
+        }
+
+        // 初始画面绘制
+        draw();
+    </script>
+</body>
+</html>
