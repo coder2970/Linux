@@ -292,7 +292,13 @@ public:
         if (req.Deserialize(request_str))
         {
             HttpResponse response;
-            if (response.ReadContent(req.Path()))
+            if (req.Path() == "./wwwroot/redir")
+            {
+                // 进行一次重定向
+                response.SetCode(302);
+                response.SetHeader("Location", "https://www.qq.com/");
+            }
+            else if (response.ReadContent(req.Path()))
             {
                 std::string suffix = req.Suffix();
                 std::string mime_suffix_value = SuffixToDesc(suffix); // 资源后缀 -> content-type
@@ -301,11 +307,14 @@ public:
             }
             else
             {
-                // 请求失败, 重定向到404
-                response.SetCode(302);
-                // 站内重定向 http://175.27.138.223:8080/404.html, 不用加主机和端口等, 直接带相应的文件
-                // 跨网站时就要带新域名
-                response.SetHeader("Location", "/404.html");
+                // 资源不存在
+                std::string err_404 = webroot + "/" + html_404;
+                req.SetPath(err_404);
+                response.ReadContent(req.Path());
+                std::string suffix = req.Suffix();
+                std::string mime_suffix_value = SuffixToDesc(suffix);
+                response.SetHeader("Content-Type", mime_suffix_value);
+                response.SetCode(404);
             }
             response_str = response.Serialize();
         }
