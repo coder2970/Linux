@@ -129,13 +129,13 @@ private:
 class HttpResponse
 {
 public:
-    HttpResponse():_httpversion("HTTP/1.1"), _blank_line("\r\n") {}
+    HttpResponse() : _httpversion("HTTP/1.1"), _blank_line("\r\n") {}
 
-    std::string Serialize() 
+    std::string Serialize()
     {
         std::string response_str = _httpversion + inner_sep1 + std::to_string(_code) + inner_sep1 + _desc + line_sep;
         // 拼接报头
-        for(auto &e : _response_headers)
+        for (auto &e : _response_headers)
         {
             std::string line = e.first + inner_sep2 + e.second + line_sep;
             response_str += line;
@@ -214,7 +214,7 @@ public:
             HttpResponse response;
             response.ReadContent(target);
             response.SetCode(200, "OK");
-            response_str = response.Serialize();     
+            response_str = response.Serialize();
         }
 
         return response_str;

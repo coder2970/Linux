@@ -22,11 +22,15 @@ int main(int argc, char *argv[])
     uint16_t httpport = std::stoi(argv[1]);
     // 协议
     std::unique_ptr<Http> http = std::make_unique<Http>();
-    
     std::unique_ptr<TcpServer> tsock = std::make_unique<TcpServer>(httpport, [&http](std::string &request_str){
         return http->HandlerRequest(request_str); 
     });
-    
     tsock->Run();
+    /*
+    tcp收到网络数据 
+    -> 调用回调函数,将数据传给http对象 
+    -> http对象处理完后返回响应内容 
+    -> 回调函数将值返回给tcpserver,并发送给客户端 
+    */
     return 0;
 }
